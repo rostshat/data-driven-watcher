@@ -1,6 +1,29 @@
 import requests
 import sqlite3
+import requests
+import os
+
+from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+
+load_dotenv()
+
+#Telegram notifications----------------------------------------
+TOKEN = os.getenv("TG_TOKEN")
+CHAT_ID = os.getenv("TG_CHAT_ID")
+
+def send_telegram_message(message):
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message,
+        "parse_mode": "HTML"
+    }
+    try:
+        requests.post(url, json=payload)
+    except Exception as e:
+        print(f"Ошибка отправки в TG: {e}")
+#----------------------------------------------------------------
 
 connection = sqlite3.connect("prices.db")
 cursor = connection.cursor()
@@ -67,11 +90,21 @@ def fetch_prices(items):
 
                 if price_float < old_price:
                     diff = old_price - price_float
+
                     print(f"🔥 ЦЕНА УПАЛА! Скидка: {diff:.2f}€")
                 elif price_float > old_price:
                     diff = price_float - old_price
                     print(f"📈 Цена выросла на {diff:.2f}€")
                 else:
+                    diff = old_price - price_float
+                    msg = f"<b>🔥 Скидка на Gigantti!</b>\n\n" \
+                          f"📦 Товар: {name}\n" \
+                          f"💰 Новая цена: {price_float}€ (Было: {old_price}€)\n" \
+                          f"📉 Выгода: {diff:.2f}€\n\n" \
+                          f"🔗 <a href='{item}'>Купить сейчас</a>"
+                    print(msg)
+                    send_telegram_message(msg)
+
                     print("➖ Цена не изменилась.")
             else:
                 print("🆕 Это новый товар, начинаем отслеживание.")  
