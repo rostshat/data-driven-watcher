@@ -2,6 +2,7 @@ import requests
 import sqlite3
 import requests
 import os
+import time
 
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
@@ -90,26 +91,33 @@ def fetch_prices(items):
 
                 if price_float < old_price:
                     diff = old_price - price_float
-
-                    print(f"🔥 ЦЕНА УПАЛА! Скидка: {diff:.2f}€")
-                elif price_float > old_price:
-                    diff = price_float - old_price
-                    print(f"📈 Цена выросла на {diff:.2f}€")
-                else:
                     diff = old_price - price_float
+
                     msg = f"<b>🔥 Скидка на Gigantti!</b>\n\n" \
                           f"📦 Товар: {name}\n" \
                           f"💰 Новая цена: {price_float}€ (Было: {old_price}€)\n" \
                           f"📉 Выгода: {diff:.2f}€\n\n" \
                           f"🔗 <a href='{item}'>Купить сейчас</a>"
+
                     print(msg)
                     send_telegram_message(msg)
-
+                    print(f"🔥 ЦЕНА УПАЛА! Скидка: {diff:.2f}€")
+                elif price_float > old_price:
+                    diff = price_float - old_price
+                    print(f"📈 Цена выросла на {diff:.2f}€")
+                else:                    
                     print("➖ Цена не изменилась.")
             else:
-                print("🆕 Это новый товар, начинаем отслеживание.")  
-                            
+                print("🆕 Это новый товар, начинаем отслеживание.")                       
         else:
             print(f"Failed to fetch page. Status code: {response.status_code}")
+    print("All items checked. Sleeping for 1 hour...")
+    time.sleep(3600)   
 
-fetch_prices(ITEMS_TO_WATCH)   
+if __name__ == "__main__":
+    while True:
+        try:
+            fetch_prices(ITEMS_TO_WATCH)
+        except Exception as e:
+            print(f"Critical Error: {e}")
+            time.sleep(60)
